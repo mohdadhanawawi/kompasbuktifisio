@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kompas Bukti Fisio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sidebar stepper (real SR sequence) + one working panel; stepper becomes a scroll strip on phones */
+:root{
+  --bg:#EEF2F5; --surface:#FFFFFF; --ink:#13202A; --muted:#566571; --line:#D5DDE3;
+  --accent:#1D5BB8; --accent-ink:#FFFFFF; --accent-soft:#E2EBF8;
+  --warn:#9A5600; --warn-soft:#FFF0D9; --err:#B3261E; --err-soft:#FCE3E0; --ok:#1C7347; --ok-soft:#DDF2E6;
+  --code-bg:#0F1A22; --code-ink:#D6E2EB; --code-tag:#8FB8F0;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0D141A; --surface:#151F28; --ink:#E4ECF1; --muted:#93A3AF; --line:#25323E;
+  --accent:#74A6F0; --accent-ink:#0A1420; --accent-soft:#1A2A42;
+  --warn:#F0B35A; --warn-soft:#352612; --err:#F28B82; --err-soft:#3A1C1A; --ok:#6CD29C; --ok-soft:#13301F;
+  --code-bg:#091016; --code-ink:#D6E2EB; --code-tag:#8FB8F0; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0D141A; --surface:#151F28; --ink:#E4ECF1; --muted:#93A3AF; --line:#25323E;
+  --accent:#74A6F0; --accent-ink:#0A1420; --accent-soft:#1A2A42;
+  --warn:#F0B35A; --warn-soft:#352612; --err:#F28B82; --err-soft:#3A1C1A; --ok:#6CD29C; --ok-soft:#13301F;
+  --code-bg:#091016; --code-ink:#D6E2EB; --code-tag:#8FB8F0; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-body);padding-inline:16px;padding-block:20px 48px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:240px minmax(0,1fr);gap:24px;align-items:start}
+header.top{max-width:1120px;margin:0 auto 20px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between}
+h1{font:700 clamp(26px,4vw,34px)/1.1 var(--f-display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);margin:6px 0 0;max-width:60ch}
+.top-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+nav.steps{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);display:flex;flex-direction:column;gap:4px}
+nav.steps button{all:unset;cursor:pointer;display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;color:var(--muted)}
+nav.steps button .n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:600 13px var(--f-mono);border:1.5px solid var(--line);background:var(--surface)}
+nav.steps button .t{font-weight:500;line-height:1.25}
+nav.steps button .t small{display:block;font-weight:400;font-size:12.5px}
+nav.steps button:hover{background:var(--surface);color:var(--ink)}
+nav.steps button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+nav.steps button[aria-current="step"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 0 var(--line)}
+nav.steps button[aria-current="step"] .n{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+main{min-width:0}
+section.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:clamp(18px,3vw,28px);display:flex;flex-direction:column;gap:20px}
+section.panel h2{font:700 24px/1.2 var(--f-display);margin:0}
+.lede{margin:-8px 0 0;color:var(--muted);max-width:68ch}
+h3{font:600 15px/1.3 var(--f-body);margin:0}
+
+.presets{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chipbtn{font:500 13px var(--f-body);padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.chipbtn:hover{border-color:var(--accent);color:var(--accent)}
+.chipbtn:focus-visible,.btn:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+.pico{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.pblock{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.pblock .head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pblock .letter{font:700 20px var(--f-display);color:var(--accent);margin-right:6px}
+.toggle{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted);cursor:pointer}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:500;min-width:0}
+label.f span.h{font-weight:400;color:var(--muted);font-size:12px}
+input[type=text],input[type=number],textarea,select{font:14px/1.45 var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:72px}
+textarea.mono{font-family:var(--f-mono);font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:14px}
+.row > *{flex:1 1 160px}
+
+.question{font:500 17px/1.45 var(--f-body);background:var(--accent-soft);border-radius:10px;padding:14px 16px;max-width:none}
+.question .q-l{display:block;margin-bottom:4px}
+
+.lint{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.lint li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;padding:8px 12px;border-radius:8px;font-size:14px}
+.lint .tag{font:600 11px var(--f-mono);letter-spacing:.04em;padding:2px 7px;border-radius:5px;margin-top:2px}
+.lint .err{background:var(--err-soft)} .lint .err .tag{background:var(--err);color:var(--surface)}
+.lint .warn{background:var(--warn-soft)} .lint .warn .tag{background:var(--warn);color:var(--surface)}
+.lint .ok{background:var(--ok-soft)} .lint .ok .tag{background:var(--ok);color:var(--surface)}
+
+.out{display:flex;flex-direction:column;gap:8px;min-width:0}
+.out .bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px}
+.count{font:12.5px var(--f-mono);color:var(--muted)}
+pre.code{margin:0;background:var(--code-bg);color:var(--code-ink);font:13px/1.6 var(--f-mono);padding:16px;border-radius:10px;overflow:auto;max-height:420px;white-space:pre-wrap;word-break:break-word}
+pre.code .tg{color:var(--code-tag)}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{font:600 14px var(--f-body);padding:10px 16px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent}
+.nextrow{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;border-top:1px solid var(--line);padding-top:16px}
+.note{font-size:13.5px;color:var(--muted);max-width:70ch;margin:0}
+.note b{color:var(--ink)}
+.howto{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px;max-width:70ch}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+
+@media (max-width:820px){
+  .wrap{grid-template-columns:minmax(0,1fr)}
+  nav.steps{position:static;flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px;scrollbar-width:thin}
+  nav.steps button{grid-template-columns:24px auto;padding:8px 10px;flex:0 0 auto}
+  nav.steps button .n{width:24px;height:24px;font-size:12px}
+  nav.steps button .t small{display:none}
+  .pico,.split{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:no-preference){ .btn,.chipbtn,nav.steps button{transition:background .15s,border-color .15s,color .15s} }
+</style>
+</head>
+<body>
+
+
+<header class="top">
+  <div>
+    <div class="lbl">Unit Fisioterapi · alat EBP</div>
+    <h1>Kompas Bukti Fisio</h1>
+    <p class="sub">Dari soalan PICO sampai ke laporan systematic review. Query PubMed dibina terus di sini, dan prompt untuk setiap peringkat siap untuk ditampal ke ChatGPT, Claude atau Gemini. Tiada data dihantar ke mana-mana.</p>
+  </div>
+  <div class="top-actions">
+    <label class="f" style="flex-direction:row;align-items:center;gap:8px"><span class="lbl">Bahasa jawapan AI</span>
+      <select id="outLang" style="width:auto"><option>English</option><option>Bahasa Melayu (Malaysia), keep technical terms in English</option></select>
+    </label>
+    <button class="btn ghost" id="resetBtn" type="button">Kosongkan semua</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="steps" aria-label="Peringkat">
+    <button type="button" data-step="1"><span class="n">1</span><span class="t">Soalan &amp; PICO<small>Tentukan skop</small></span></button>
+    <button type="button" data-step="2"><span class="n">2</span><span class="t">Strategi carian<small>PubMed, PEDro, CINAHL</small></span></button>
+    <button type="button" data-step="3"><span class="n">3</span><span class="t">Saringan abstrak<small>Include / exclude</small></span></button>
+    <button type="button" data-step="4"><span class="n">4</span><span class="t">Ekstrak data<small>Jadual kajian</small></span></button>
+    <button type="button" data-step="5"><span class="n">5</span><span class="t">Risiko bias<small>RoB 2, PEDro, AMSTAR 2</small></span></button>
+    <button type="button" data-step="6"><span class="n">6</span><span class="t">Sintesis &amp; laporan<small>GRADE, PRISMA 2020</small></span></button>
+  </nav>
+
+  <main>
+    <!-- STEP 1 -->
+    <section class="panel" data-panel="1">
+      <h2>Soalan &amp; PICO</h2>
+      <p class="lede">Isi istilah utama dan sinonim (satu baris satu). Kalau kau tahu MeSH heading, letak sekali. Tool ni akan semak ejaan dan singkatan yang bahaya sebelum kau mula search.</p>
+      <div class="presets"><span class="lbl">Cuba contoh:</span>
+        <button class="chipbtn" type="button" data-preset="oa">OA lutut + elektroterapi</button>
+        <button class="chipbtn" type="button" data-preset="cp">CP kanak-kanak + NMES</button>
+        <button class="chipbtn" type="button" data-preset="pfmt">PFMT selepas bersalin</button>
+      </div>
+
+      <div class="pico" id="pico"></div>
+
+      <div class="row">
+        <label class="f">Reka bentuk kajian
+          <select id="design">
+            <option value="rct">RCT sahaja (filter Cochrane)</option>
+            <option value="nrsi">Kajian bukan rawak / pemerhatian</option>
+            <option value="sr">Systematic review / meta-analysis</option>
+            <option value="any">Semua reka bentuk</option>
+          </select>
+        </label>
+        <label class="f">Tahun dari <input type="number" id="yfrom" placeholder="cth. 2010" min="1950" max="2100"></label>
+        <label class="f">Hingga <input type="number" id="yto" placeholder="kini" min="1950" max="2100"></label>
+        <label class="f">Bahasa artikel
+          <select id="lang"><option value="any">Semua bahasa</option><option value="en">English sahaja</option></select>
+        </label>
+      </div>
+      <label class="f">Kriteria pengecualian klinikal <span class="h">Contoh: rheumatoid arthritis, post-op TKR. Ini masuk ke kriteria saringan (Peringkat 3), bukan ke search string.</span>
+        <input type="text" id="excl">
+      </label>
+
+      <div class="question" id="question"></div>
+      <div><h3 style="margin-bottom:8px">Semakan automatik</h3><ul class="lint" id="lint"></ul></div>
+      <div class="nextrow"><span></span><button class="btn primary" type="button" data-go="2">Seterusnya: Strategi carian →</button></div>
+    </section>
+
+    <!-- STEP 2 -->
+    <section class="panel" data-panel="2" hidden>
+      <h2>Strategi carian</h2>
+      <p class="lede">Untuk cari artikel cepat, guna query PubMed di bawah terus. Untuk systematic review, hantar prompt kedua ke AI supaya dia semak MeSH dan terjemah ke database lain.</p>
+
+      <div class="out">
+        <div class="bar"><h3>A. Query PubMed (dibina dari input kau)</h3><span class="count" id="qCount"></span></div>
+        <pre class="code" id="qOut"></pre>
+        <div class="btns">
+          <button class="btn primary" type="button" data-copy="query">Salin query</button>
+          <a class="btn" id="pubmedLink" href="#" target="_blank" rel="noopener">Buka terus dalam PubMed ↗</a>
+          <a class="btn" id="scholarLink" href="#" target="_blank" rel="noopener">Google Scholar ↗</a>
+          <a class="btn" id="pedroLink" href="https://search.pedro.org.au/advanced-search" target="_blank" rel="noopener">PEDro ↗</a>
+        </div>
+        <p class="note"><b>PEDro</b> tak sokong Boolean bersarang. Taip kata kunci ini dalam medan <i>Abstract &amp; Title</i>: <code id="pedroKw"></code></p>
+      </div>
+
+      <div class="out">
+        <div class="bar"><h3>B. Prompt: semak &amp; terjemah strategi ke semua database</h3><span class="count" data-count="p2"></span></div>
+        <pre class="code" data-prompt="p2"></pre>
+        <div class="btns"><button class="btn primary" type="button" data-copy="p2">Salin prompt</button></div>
+      </div>
+      <ol class="howto">
+        <li>Jalankan query dalam PubMed. Kalau hit melebihi 2,000, minta AI ketatkan; kalau kurang 20, longgarkan sinonim.</li>
+        <li>Rekod tarikh search dan bilangan hit setiap database. Nombor ni masuk ke PRISMA flow nanti.</li>
+        <li>Export hasil: PubMed → Save → Format "Abstract" (text) untuk ditampal di Peringkat 3, atau RIS untuk Zotero/Rayyan.</li>
+      </ol>
+      <div class="nextrow"><button class="btn" type="button" data-go="1">← PICO</button><button class="btn primary" type="button" data-go="3">Seterusnya: Saringan abstrak →</button></div>
+    </section>
+
+    <!-- STEP 3 -->
+    <section class="panel" data-panel="3" hidden>
+      <h2>Saringan abstrak</h2>
+      <p class="lede">Kriteria include/exclude dijana dari PICO kau. Tampal tajuk dan abstrak (10–20 rekod sekali hantar paling stabil). AI digalakkan pilih MAYBE bila tak pasti, jadi artikel relevan tak tercicir.</p>
+      <label class="f">Tampal rekod di sini (pilihan) <span class="h">Kalau kosong, prompt akan ada ruang untuk kau tampal kemudian.</span>
+        <textarea id="paste3" class="mono" rows="5"></textarea>
+      </label>
+      <div class="out">
+        <div class="bar"><h3>Prompt saringan</h3><span class="count" data-count="p3"></span></div>
+        <pre class="code" data-prompt="p3"></pre>
+        <div class="btns"><button class="btn primary" type="button" data-copy="p3">Salin prompt</button></div>
+      </div>
+      <p class="note"><b>Standard SR:</b> dua penyaring manusia secara bebas. Guna output AI sebagai penyaring kedua atau semakan silang, dan rekod sebab exclude untuk full-text.</p>
+      <div class="nextrow"><button class="btn" type="button" data-go="2">← Strategi carian</button><button class="btn primary" type="button" data-go="4">Seterusnya: Ekstrak data →</button></div>
+    </section>
+
+    <!-- STEP 4 -->
+    <section class="panel" data-panel="4" hidden>
+      <h2>Ekstrak data</h2>
+      <p class="lede">Satu artikel satu hantar. Medan intervensi ikut TIDieR dan parameter fisio (frekuensi, intensiti, tempoh, bilangan sesi), sebab benda ni yang paling selalu hilang dalam review.</p>
+      <label class="f">Tampal teks penuh artikel (pilihan)
+        <textarea id="paste4" class="mono" rows="5"></textarea>
+      </label>
+      <div class="out">
+        <div class="bar"><h3>Prompt ekstrak data</h3><span class="count" data-count="p4"></span></div>
+        <pre class="code" data-prompt="p4"></pre>
+        <div class="btns"><button class="btn primary" type="button" data-copy="p4">Salin prompt</button></div>
+      </div>
+      <p class="note">Semak semula setiap nombor dengan PDF asal. AI kadang-kadang salah baca jadual, terutama SD vs SE.</p>
+      <div class="nextrow"><button class="btn" type="button" data-go="3">← Saringan</button><button class="btn primary" type="button" data-go="5">Seterusnya: Risiko bias →</button></div>
+    </section>
+
+    <!-- STEP 5 -->
+    <section class="panel" data-panel="5" hidden>
+      <h2>Risiko bias</h2>
+      <p class="lede">Pilih alat ikut reka bentuk kajian. AI wajib petik ayat dari artikel sebagai bukti setiap penilaian, supaya kau boleh semak.</p>
+      <div class="row">
+        <label class="f">Alat penilaian
+          <select id="rob">
+            <option value="rob2">Cochrane RoB 2 (RCT)</option>
+            <option value="pedro">PEDro scale (RCT fisio)</option>
+            <option value="robins">ROBINS-I (bukan rawak)</option>
+            <option value="amstar">AMSTAR 2 (systematic review)</option>
+          </select>
+        </label>
+      </div>
+      <label class="f">Tampal teks penuh artikel (pilihan)
+        <textarea id="paste5" class="mono" rows="5"></textarea>
+      </label>
+      <div class="out">
+        <div class="bar"><h3>Prompt risiko bias</h3><span class="count" data-count="p5"></span></div>
+        <pre class="code" data-prompt="p5"></pre>
+        <div class="btns"><button class="btn primary" type="button" data-copy="p5">Salin prompt</button></div>
+      </div>
+      <div class="nextrow"><button class="btn" type="button" data-go="4">← Ekstrak data</button><button class="btn primary" type="button" data-go="6">Seterusnya: Sintesis →</button></div>
+    </section>
+
+    <!-- STEP 6 -->
+    <section class="panel" data-panel="6" hidden>
+      <h2>Sintesis &amp; laporan</h2>
+      <p class="lede">Gabungkan semua jadual ekstrak dan risiko bias. AI akan putuskan sama ada meta-analysis munasabah, nilai certainty dengan GRADE, dan draf bahagian Results ikut PRISMA 2020.</p>
+      <div class="split">
+        <label class="f">Nombor PRISMA <span class="h">Satu baris satu, cth. "PubMed 412", "Selepas buang duplikat 530", "Full-text dinilai 41", "Dimasukkan 9"</span>
+          <textarea id="prisma" class="mono" rows="5"></textarea>
+        </label>
+        <label class="f">Tampal jadual ekstrak + risiko bias (pilihan)
+          <textarea id="paste6" class="mono" rows="5"></textarea>
+        </label>
+      </div>
+      <div class="out">
+        <div class="bar"><h3>Prompt sintesis</h3><span class="count" data-count="p6"></span></div>
+        <pre class="code" data-prompt="p6"></pre>
+        <div class="btns"><button class="btn primary" type="button" data-copy="p6">Salin prompt</button></div>
+      </div>
+      <p class="note">Kalau nak buat meta-analysis sebenar, jalankan dalam RevMan atau R (paket <code>meta</code>). Jangan guna nombor pooled yang AI kira sendiri dalam chat.</p>
+      <div class="nextrow"><button class="btn" type="button" data-go="5">← Risiko bias</button><button class="btn" type="button" data-go="1">Mula soalan baru</button></div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+const KEY='kompas-bukti-v1';
+const LETTERS={P:['Population','Populasi / masalah'],I:['Intervention','Intervensi'],C:['Comparison','Perbandingan'],O:['Outcome','Hasil']};
+function blank(){return{P:{term:'',syn:'',mesh:'',use:true},I:{term:'',syn:'',mesh:'',use:true},C:{term:'',syn:'',mesh:'',use:false},O:{term:'',syn:'',mesh:'',use:false},design:'rct',yfrom:'',yto:'',lang:'any',excl:'',outLang:'English',rob:'rob2',paste3:'',paste4:'',paste5:'',paste6:'',prisma:''};}
+const PRESETS={
+ oa:{P:{term:'knee osteoarthritis',syn:'osteoarthritis\ngonarthrosis\ndegenerative joint disease',mesh:'Osteoarthritis, Knee',use:true},
+     I:{term:'electrotherapy',syn:'electrical stimulation\ntranscutaneous electrical nerve stimulation\nneuromuscular electrical stimulation\ninterferential current\nTENS',mesh:'Electric Stimulation Therapy',use:true},
+     C:{term:'sham',syn:'placebo\nusual care\nexercise only',mesh:'',use:false},
+     O:{term:'quality of life',syn:'health-related quality of life\nWOMAC\nKOOS\npain',mesh:'Quality of Life',use:false},
+     design:'rct',yfrom:'2010',yto:'',lang:'en',excl:'rheumatoid arthritis, gout'},
+ cp:{P:{term:'cerebral palsy',syn:'spastic cerebral palsy\nspastic diplegia\nhemiplegic cerebral palsy',mesh:'Cerebral Palsy',use:true},
+     I:{term:'neuromuscular electrical stimulation',syn:'NMES\nfunctional electrical stimulation\nelectrical stimulation',mesh:'Electric Stimulation Therapy',use:true},
+     C:{term:'conventional physiotherapy',syn:'usual care\nsham stimulation',mesh:'',use:false},
+     O:{term:'gross motor function',syn:'GMFM\nwalking speed\nmuscle strength\nspasticity',mesh:'',use:false},
+     design:'rct',yfrom:'2005',yto:'',lang:'any',excl:'botulinum toxin within 3 months, orthopaedic surgery within 6 months'},
+ pfmt:{P:{term:'postpartum women',syn:'postnatal\npuerperium\nafter childbirth\nprimiparous',mesh:'Postpartum Period',use:true},
+     I:{term:'pelvic floor muscle training',syn:'PFMT\npelvic floor exercise\nKegel exercise',mesh:'',use:true},
+     C:{term:'no training',syn:'usual care\nwritten advice',mesh:'',use:false},
+     O:{term:'urinary incontinence',syn:'stress urinary incontinence\nurine leakage\nSUI',mesh:'Urinary Incontinence',use:true},
+     design:'rct',yfrom:'2010',yto:'',lang:'en',excl:'caesarean section only, pre-existing neurological disorder'}
+};
+let S=blank();
+try{const raw=localStorage.getItem(KEY); if(raw){S=Object.assign(blank(),JSON.parse(raw));}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+// ---------- build PICO inputs ----------
+const pico=document.getElementById('pico');
+pico.innerHTML=['P','I','C','O'].map(k=>`
+ <div class="pblock">
+  <div class="head"><h3><span class="letter">${k}</span>${LETTERS[k][1]}</h3>
+   <label class="toggle"><input type="checkbox" id="${k}_use"> masuk search</label></div>
+  <label class="f">Istilah utama <input type="text" id="${k}_term"></label>
+  <label class="f">Sinonim / singkatan <span class="h">Satu baris satu. Guna * untuk truncation, cth. physiotherap*</span><textarea id="${k}_syn" rows="3"></textarea></label>
+  <label class="f">MeSH heading <span class="h">Pilihan. Pisahkan dengan baris baru.</span><input type="text" id="${k}_mesh"></label>
+ </div>`).join('');
+
+function fill(){
+ ['P','I','C','O'].forEach(k=>{
+  document.getElementById(k+'_term').value=S[k].term;
+  document.getElementById(k+'_syn').value=S[k].syn;
+  document.getElementById(k+'_mesh').value=S[k].mesh;
+  document.getElementById(k+'_use').checked=!!S[k].use;
+ });
+ ['design','yfrom','yto','lang','excl','outLang','rob','paste3','paste4','paste5','paste6','prisma'].forEach(id=>{const el=document.getElementById(id); if(el) el.value=S[id]??'';});
+}
+document.addEventListener('input',e=>{
+ const id=e.target.id; if(!id) return;
+ const m=id.match(/^([PICO])_(term|syn|mesh|use)$/);
+ if(m){S[m[1]][m[2]]= m[2]==='use'? e.target.checked : e.target.value;}
+ else if(id in S){S[id]=e.target.value; if(id==='design'){S.rob={rct:'rob2',nrsi:'robins',sr:'amstar',any:S.rob}[S.design]; document.getElementById('rob').value=S.rob;}}
+ save(); render();
+});
+document.addEventListener('change',e=>{ if(e.target.matches('select,input[type=checkbox]')) e.target.dispatchEvent(new Event('input',{bubbles:true})); });
+
+// ---------- helpers ----------
+const lines=s=>(s||'').split(/\n|;/).map(x=>x.trim()).filter(Boolean);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function terms(k){const b=S[k];const t=[b.term.trim(),...lines(b.syn)].filter(Boolean);return [...new Map(t.map(x=>[x.toLowerCase(),x])).values()];}
+function fmt(t){ if(/\[[a-z ]+\]$/i.test(t)) return t; const clean=t.replace(/^"|"$/g,''); return /[\s-]/.test(clean)? `"${clean}"[tiab]` : `${clean}[tiab]`; }
+function block(k){ const mesh=lines(S[k].mesh).map(m=>`"${m.replace(/"/g,'')}"[Mesh]`); const t=terms(k).map(fmt); return [...mesh,...t]; }
+const FILTERS={
+ rct:['randomized controlled trial[pt]','controlled clinical trial[pt]','randomized[tiab]','placebo[tiab]','randomly[tiab]','trial[tiab]','groups[tiab]'],
+ nrsi:['"Cohort Studies"[Mesh]','cohort[tiab]','"case-control"[tiab]','observational[tiab]','"quasi-experimental"[tiab]','"before and after"[tiab]','"pre-post"[tiab]'],
+ sr:['systematic[sb]','meta-analysis[pt]','"systematic review"[tiab]','"meta-analysis"[tiab]'],
+ any:[]
+};
+const DESIGN_TXT={rct:'Randomised controlled trials (including cluster and crossover RCTs)',nrsi:'Non-randomised controlled studies, cohort, case-control, quasi-experimental or pre-post designs',sr:'Systematic reviews with or without meta-analysis',any:'Any primary study design with a comparison group or pre-post measurement'};
+function used(){return ['P','I','C','O'].filter(k=>S[k].use && block(k).length);}
+function buildQuery(pretty){
+ const parts=used().map(k=>block(k));
+ if(!parts.length) return '';
+ const f=FILTERS[S.design];
+ if(f.length) parts.push(f);
+ const nl=pretty?'\n':' ', ind=pretty?'  ':'';
+ let q=parts.map(p=>'('+nl+p.map((x,i)=>ind+(i?'OR ':'')+x).join(nl)+nl+')').join(nl+'AND'+nl);
+ q+=nl+'NOT (animals[mh] NOT humans[mh])';
+ if(S.yfrom||S.yto) q+=nl+`AND ("${S.yfrom||'1900'}"[dp] : "${S.yto||'3000'}"[dp])`;
+ if(S.lang==='en') q+=nl+'AND english[la]';
+ return q;
+}
+function question(){
+ const P=S.P.term||'[populasi]', I=S.I.term||'[intervensi]', C=S.C.term, O=S.O.term||'[hasil]';
+ return `In ${P}, what is the effect of ${I}${C?` compared with ${C}`:''} on ${O}?`;
+}
+function picoTxt(){
+ return ['P','I','C','O'].map(k=>{const t=terms(k);const m=lines(S[k].mesh);
+  return `${k} (${LETTERS[k][0]}): ${t.length?t.join('; '):'not specified'}${m.length?` | MeSH: ${m.join('; ')}`:''}`;}).join('\n');
+}
+const years=()=> (S.yfrom||S.yto)? `${S.yfrom||'earliest'} to ${S.yto||'present'}` : 'no limit';
+const langTxt=()=> S.lang==='en'?'English only':'any language';
+const respond=()=>`Respond in ${S.outLang}.`;
+
+// ---------- lint ----------
+const TYPO={osteoathritis:'osteoarthritis',athritis:'arthritis',arthiritis:'arthritis',rheumatiod:'rheumatoid',rhematoid:'rheumatoid',physiotheraphy:'physiotherapy',physioterapy:'physiotherapy',theraphy:'therapy',excercise:'exercise',excercises:'exercises',exercice:'exercise',stimulaton:'stimulation',stimualtion:'stimulation',electrotheraphy:'electrotherapy',incontinance:'incontinence',incontinece:'incontinence',cerebal:'cerebral',pateint:'patient',pateints:'patients',rehabilitaion:'rehabilitation',rehabiltation:'rehabilitation',strenght:'strength',spacticity:'spasticity',scoliosos:'scoliosis',paediatic:'paediatric',pediatic:'pediatric',neonatel:'neonatal',postpartun:'postpartum',ultrasonud:'ultrasound',shoulde:'shoulder'};
+const AMBIG={OA:'"open access", "ovarian ageing"',TENS:'"tens of patients"',IFC:'"interfacial", nama syarikat',US:'"United States", "us"',ES:'"effect size", Sepanyol',PT:'"prothrombin time", "patient"',CP:'"chest pain", "chronic pancreatitis"',MS:'"mass spectrometry", "milestone"',ROM:'"rupture of membranes"',QOL:'tak bahaya, tapi tulis penuh juga',SUI:'jarang, selamat jika berpasangan',DDH:'selamat',LBP:'"lipopolysaccharide-binding protein"',ESWT:'selamat',RA:'"right atrium", "room air"',AE:'"adverse event"',UI:'"user interface"',ICU:'selamat'};
+function lint(){
+ const out=[];
+ if(!S.P.term.trim()) out.push(['err','PERLU','Istilah utama P masih kosong.']);
+ if(!S.I.term.trim()) out.push(['err','PERLU','Istilah utama I masih kosong.']);
+ ['P','I','C','O'].forEach(k=>{
+  const all=[...terms(k),...lines(S[k].mesh)];
+  all.forEach(t=>{
+   t.toLowerCase().split(/[^a-z]+/).forEach(w=>{ if(TYPO[w]) out.push(['err','EJAAN',`${k}: "${w}" sepatutnya "${TYPO[w]}". PubMed tak betulkan ejaan dalam field [tiab].`]); });
+   const up=t.replace(/[^A-Za-z]/g,'').toUpperCase();
+   if(/^[A-Z]{2,5}$/.test(t.trim()) && AMBIG[up] && !/selamat/.test(AMBIG[up])) out.push(['warn','SINGKATAN',`${k}: "${t}" boleh tangkap ${AMBIG[up]}. Pastikan istilah penuh ada sekali, atau buang singkatan ini kalau hit terlalu bising.`]);
+   if(/\bNOT\b/.test(t)) out.push(['warn','NOT',`${k}: Jangan letak NOT dalam sinonim. Pindahkan ke kriteria pengecualian.`]);
+  });
+  if(S[k].use && S[k].term.trim() && terms(k).length<3) out.push(['warn','SINONIM',`${k}: Baru ${terms(k).length} istilah. SR perlukan sinonim lebih banyak (variasi UK/US, singkatan, istilah lama).`]);
+ });
+ if(S.C.use) out.push(['warn','SKOP',`C dimasukkan dalam search. Biasanya C tak perlu dalam string sebab ramai abstrak tak sebut comparator, dan kau akan terlepas artikel.`]);
+ if(S.excl.trim()) out.push(['ok','BAGUS',`Pengecualian "${S.excl.trim()}" akan masuk sebagai kriteria saringan, bukan NOT dalam query. Ini cara yang betul.`]);
+ if(S.yto && S.yfrom && +S.yto<+S.yfrom) out.push(['err','TAHUN','Tahun "hingga" lebih awal dari tahun "dari".']);
+ if(!out.some(o=>o[0]!=='ok')) out.unshift(['ok','SEDIA','Tiada isu ketara. Teruskan ke strategi carian.']);
+ return out;
+}
+
+// ---------- prompts ----------
+function P2(){return `You are an experienced health sciences librarian who designs search strategies for systematic reviews in physiotherapy and rehabilitation.
+
+REVIEW QUESTION
+${question()}
+
+PICO
+${picoTxt()}
+Study design: ${DESIGN_TXT[S.design]}
+Years: ${years()}
+Language: ${langTxt()}
+
+DRAFT PUBMED STRING (built from my own terms; check and improve it)
+${buildQuery(true)||'[not built yet]'}
+
+TASKS
+1. Check the spelling of every term and correct it. List each correction.
+2. Verify that each MeSH heading exists and is the best fit. Suggest better or additional headings and say whether exploding them is appropriate. If you are not certain a heading exists, say so instead of guessing.
+3. Add missing synonyms, UK/US spelling variants and truncation. Flag abbreviations that are ambiguous in PubMed (for example OA, TENS, US) and either pair them with context or remove them.
+4. Keep NOT out of the strategy except for the standard animal-study filter. Clinical exclusions belong in the screening criteria.
+5. Do not search on the Comparison or Outcome concepts unless they are essential to the question; explain your choice.
+6. Translate the final strategy for: PubMed, CINAHL (EBSCO syntax with MH, TI, AB and proximity N3), Cochrane CENTRAL, Embase (Ovid) and PEDro (PEDro does not support nested Boolean, so give 2-3 keywords for the "Abstract & Title" field plus the matching "Therapy", "Problem" and "Body part" dropdown values).
+
+OUTPUT
+A. Concept table: concept | controlled vocabulary | free-text terms
+B. Final PubMed string in one code block, ready to paste
+C. One code block per other database
+D. Corrections and judgement calls you made, as a short list
+E. Two or three ways to raise precision if PubMed returns more than 2,000 records, and two ways to raise sensitivity if it returns fewer than 20
+
+${respond()} Keep all database syntax in English.`;}
+
+function P3(){const ex=S.excl.trim();return `You are the second reviewer screening titles and abstracts for a systematic review. Be inclusive at this stage: when the record does not give enough information, mark MAYBE, not EXCLUDE.
+
+REVIEW QUESTION
+${question()}
+
+INCLUSION CRITERIA
+I1 Population: ${terms('P').join('; ')||'[specify]'}
+I2 Intervention: ${terms('I').join('; ')||'[specify]'}
+I3 Comparator: ${terms('C').join('; ')||'any comparator, or none'}
+I4 Outcomes: ${terms('O').join('; ')||'any patient-relevant outcome'}
+I5 Study design: ${DESIGN_TXT[S.design]}
+I6 Publication years: ${years()}
+I7 Language: ${langTxt()}
+
+EXCLUSION CRITERIA
+E1 Population does not match I1${ex?`, or participants with: ${ex}`:''}
+E2 Intervention does not match I2, or it cannot be separated from co-interventions
+E3 Study design does not match I5
+E4 Not primary research with data (editorial, letter, narrative review, protocol, conference abstract without results)${S.design==='sr'?' [ignore E4 for this review: secondary research is eligible]':''}
+E5 Animal, cadaver or laboratory study
+
+TASK
+Give one decision per record and the criterion code that drove it. Do not add details that are not in the record.
+
+OUTPUT
+1. A table: # | first author, year | short title | decision (INCLUDE / MAYBE / EXCLUDE) | criterion code | one-line reason
+2. Totals for each decision
+3. The records you were least confident about, and what information would settle them
+
+RECORDS
+${S.paste3.trim()||'[Paste titles and abstracts here. PubMed: Save > Format "Abstract" works well. 10-20 records per message.]'}
+
+${respond()}`;}
+
+function P4(){return `You are extracting data for a systematic review in physiotherapy. Extract only what the article reports. Write "NR" when an item is not reported. Do not calculate, convert or estimate any number unless I ask.
+
+REVIEW QUESTION
+${question()}
+Outcomes of interest: ${terms('O').join('; ')||'all patient-relevant outcomes reported'}
+
+EXTRACT INTO THESE SECTIONS
+1. Study: first author, year, country, setting, funding, trial registration number
+2. Design: design type, number of arms, follow-up time points
+3. Participants: inclusion and exclusion criteria, n randomised and n analysed per arm, age (mean, SD), sex, diagnosis and severity, key baseline measures
+4. Intervention, following TIDieR: name, rationale, materials or device, procedure, who delivered it, mode (individual or group, supervised or home), setting, dose (frequency per week, session length, total sessions, programme length), intensity or device parameters (for example current type, frequency in Hz, pulse width, amplitude, electrode placement), tailoring, adherence
+5. Comparator: the same TIDieR items as section 4
+6. Outcomes: for each outcome, the measurement tool, unit, direction of benefit (higher or lower is better) and time point
+7. Results: for each outcome, arm and time point, give mean, SD (state if SE or CI was reported instead), n, and any between-group difference with 95% CI and p-value as reported
+8. Adverse events and dropouts with reasons
+9. Authors' main conclusion in one sentence
+
+FORMAT
+Sections 1-5 and 8-9 as a two-column table (item | data | where found, e.g. "Methods, para 3" or "Table 2"). Section 7 as a table: outcome | time point | arm | n | mean | SD | between-group result.
+Finish with a list of anything ambiguous I should check against the PDF.
+
+ARTICLE
+${S.paste4.trim()||'[Paste the full text, or attach the PDF.]'}
+
+${respond()}`;}
+
+const ROB={
+ rob2:{name:'Cochrane Risk of Bias 2 (RoB 2) for randomised trials',body:`Assess the effect of assignment to the intervention (intention-to-treat).
+Domains:
+D1 Bias arising from the randomisation process
+D2 Bias due to deviations from intended interventions
+D3 Bias due to missing outcome data
+D4 Bias in measurement of the outcome
+D5 Bias in selection of the reported result
+For each domain answer the signalling questions (Y / PY / PN / N / NI), then judge Low risk / Some concerns / High risk. Give an overall judgement using the RoB 2 algorithm. Judge D4 and D5 separately for each outcome of interest if they differ.`},
+ pedro:{name:'PEDro scale',body:`Score the 11 PEDro items Yes or No:
+1 Eligibility criteria specified (does not count toward the total)
+2 Random allocation
+3 Concealed allocation
+4 Groups similar at baseline on the most important prognostic indicators
+5 Blinding of all subjects
+6 Blinding of all therapists who administered the therapy
+7 Blinding of all assessors who measured at least one key outcome
+8 Measures of at least one key outcome obtained from more than 85% of subjects initially allocated
+9 Intention-to-treat analysis, or all subjects received treatment or control as allocated
+10 Between-group statistical comparison reported for at least one key outcome
+11 Point measures and measures of variability provided for at least one key outcome
+Give the total out of 10 (items 2-11). Use the PEDro rule: an item is scored Yes only when the criterion is clearly satisfied in the report.`},
+ robins:{name:'ROBINS-I for non-randomised studies of interventions',body:`First list the important confounders for this question. Then judge seven domains: confounding; selection of participants; classification of interventions; deviations from intended interventions; missing data; measurement of outcomes; selection of the reported result. Each is Low / Moderate / Serious / Critical / No information, followed by an overall judgement.`},
+ amstar:{name:'AMSTAR 2 for systematic reviews',body:`Rate all 16 items Yes / Partial yes / No. Critical domains are items 2, 4, 7, 9, 11, 13 and 15. Give overall confidence in the results as High / Moderate / Low / Critically low using the AMSTAR 2 rating scheme, and list which critical flaws and non-critical weaknesses drove it.`}
+};
+function P5(){const r=ROB[S.rob];return `You are a methodologist appraising a study for a systematic review in physiotherapy. Use the ${r.name}.
+
+REVIEW QUESTION
+${question()}
+Outcomes of interest: ${terms('O').join('; ')||'the main outcomes reported'}
+
+TOOL
+${r.body}
+
+RULES
+- Support every judgement with a short direct quote from the article and its location. If the article says nothing, write "Not reported" and judge accordingly; do not assume good practice.
+- Where a judgement depends on information that may be in the protocol or trial registry, say so.
+
+OUTPUT
+1. A table: domain or item | judgement | supporting quote | location | reason
+2. Overall judgement in one line
+3. The two issues that most limit how far a physiotherapist can trust this result
+
+ARTICLE
+${S.paste5.trim()||'[Paste the full text, or attach the PDF.]'}
+
+${respond()}`;}
+
+function P6(){const pr=lines(S.prisma);return `You are helping me write the results of a systematic review in physiotherapy that will follow PRISMA 2020 and GRADE.
+
+REVIEW QUESTION
+${question()}
+Study design included: ${DESIGN_TXT[S.design]}
+Outcomes of interest: ${terms('O').join('; ')||'as listed in the extraction tables'}
+
+PRISMA 2020 NUMBERS
+${pr.length?pr.join('\n'):'[Records identified per database, duplicates removed, records screened, records excluded, full texts assessed, full texts excluded with reasons, studies included]'}
+
+TASKS
+1. PRISMA flow: lay out the numbers as the PRISMA 2020 flow diagram text, box by box. Point out any numbers that do not add up.
+2. Characteristics of included studies: one table (study | country | design | n | population | intervention dose | comparator | outcomes and time points).
+3. Decide, outcome by outcome, whether a meta-analysis is reasonable (at least two studies, same outcome construct, comparable time point and comparator, data available). Explain the decision. Do not compute pooled estimates yourself; tell me which studies and data to enter into RevMan or R, and whether to use mean difference or standardised mean difference.
+4. Where meta-analysis is not reasonable, write a narrative synthesis following SWiM: group studies, state the synthesis method (for example vote counting on direction of effect), and present a direction-of-effect table.
+5. GRADE: for each outcome, rate certainty starting from ${S.design==='rct'||S.design==='sr'?'High (randomised evidence)':'Low (non-randomised evidence)'}. Consider risk of bias, inconsistency, indirectness, imprecision and publication bias. Give a Summary of Findings table with the reason for each downgrade.
+6. Draft the Results and Discussion paragraphs, including what this means for physiotherapy practice and what a future trial should do differently.
+
+RULES
+- Use only the data I provide. Mark gaps as [DATA NEEDED] instead of filling them in.
+- Keep certainty language consistent with GRADE (for example "may improve" for low certainty).
+
+EXTRACTION AND RISK OF BIAS TABLES
+${S.paste6.trim()||'[Paste your extraction tables and risk-of-bias tables here.]'}
+
+${respond()}`;}
+
+const PROMPTS={p2:P2,p3:P3,p4:P4,p5:P5,p6:P6};
+const cache={};
+
+// ---------- render ----------
+function hl(q){return esc(q).replace(/\[(tiab|Mesh|pt|mh|sb|dp|la)\]/g,'<span class="tg">[$1]</span>').replace(/\b(AND|OR|NOT)\b/g,'<b>$1</b>');}
+function wc(t){return `${t.trim().split(/\s+/).filter(Boolean).length} patah perkataan · ${t.length} aksara`;}
+function render(){
+ document.getElementById('question').innerHTML=`<span class="lbl q-l">Soalan kajian</span>${esc(question())}`;
+ document.getElementById('lint').innerHTML=lint().map(([c,t,m])=>`<li class="${c}"><span class="tag">${t}</span><span>${esc(m)}</span></li>`).join('');
+ const q=buildQuery(true), q1=buildQuery(false);
+ cache.query=q1;
+ document.getElementById('qOut').innerHTML=q?hl(q):'Isi sekurang-kurangnya P dan I di Peringkat 1.';
+ document.getElementById('qCount').textContent=q?`${used().length} konsep · ${q1.length} aksara`:'';
+ document.getElementById('pubmedLink').href=q1?'https://pubmed.ncbi.nlm.nih.gov/?term='+encodeURIComponent(q1):'https://pubmed.ncbi.nlm.nih.gov/advanced/';
+ const simple=[S.P.term,S.I.term,S.O.use?S.O.term:''].filter(Boolean).map(x=>`"${x}"`).join(' ');
+ document.getElementById('scholarLink').href='https://scholar.google.com/scholar?q='+encodeURIComponent(simple||'physiotherapy');
+ document.getElementById('pedroKw').textContent=[S.P.term,S.I.term].filter(Boolean).join(' ')||'—';
+ Object.keys(PROMPTS).forEach(k=>{
+  const t=PROMPTS[k](); cache[k]=t;
+  const pre=document.querySelector(`[data-prompt="${k}"]`); if(pre) pre.textContent=t;
+  const c=document.querySelector(`[data-count="${k}"]`); if(c) c.textContent=wc(t);
+ });
+}
+
+// ---------- nav ----------
+function go(n){
+ document.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==String(n));
+ document.querySelectorAll('nav.steps button').forEach(b=>b.toggleAttribute('aria-current',false));
+ const cur=document.querySelector(`nav.steps button[data-step="${n}"]`); if(cur){cur.setAttribute('aria-current','step'); cur.scrollIntoView({block:'nearest',inline:'nearest'});}
+ try{localStorage.setItem(KEY+'-step',n);}catch(e){}
+}
+document.addEventListener('click',e=>{
+ const s=e.target.closest('[data-step],[data-go]'); if(s){go(s.dataset.step||s.dataset.go); if(s.dataset.go) window.scrollTo({top:0,behavior:'smooth'}); return;}
+ const p=e.target.closest('[data-preset]'); if(p){const keep={outLang:S.outLang}; S=Object.assign(blank(),JSON.parse(JSON.stringify(PRESETS[p.dataset.preset])),keep); S.rob='rob2'; save(); fill(); render(); return;}
+ const c=e.target.closest('[data-copy]'); if(c){copy(c.dataset.copy,c); return;}
+});
+const resetBtn=document.getElementById('resetBtn');
+resetBtn.addEventListener('click',()=>{
+ if(resetBtn.dataset.armed){S=blank(); save(); fill(); render(); delete resetBtn.dataset.armed; resetBtn.textContent='Kosongkan semua'; go(1); return;}
+ resetBtn.dataset.armed='1'; resetBtn.textContent='Tekan lagi untuk sahkan';
+ setTimeout(()=>{delete resetBtn.dataset.armed; resetBtn.textContent='Kosongkan semua';},3000);
+});
+function copy(key,btn){
+ const text=cache[key]||''; const orig=btn.textContent;
+ const done=msg=>{btn.textContent=msg; setTimeout(()=>btn.textContent=orig,1800);};
+ const fallback=()=>{const pre=key==='query'?document.getElementById('qOut'):document.querySelector(`[data-prompt="${key}"]`); const r=document.createRange(); r.selectNodeContents(pre); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); done('Teks dipilih, tekan Ctrl/⌘+C');};
+ try{ navigator.clipboard.writeText(text).then(()=>done('Disalin ✓'),fallback); }catch(err){ fallback(); }
+}
+
+// ---------- boot ----------
+if(!S.P.term && !S.I.term){ S=Object.assign(blank(),JSON.parse(JSON.stringify(PRESETS.oa))); }
+fill(); render();
+let start=1; try{start=+localStorage.getItem(KEY+'-step')||1;}catch(e){}
+go(start);
+})();
+</script>
+
+</body>
+</html>
